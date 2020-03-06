@@ -75,35 +75,66 @@ int array[100];
 
 time_t t;
 
+unsigned char checker = 0;
+unsigned char counting = 0;
+unsigned char number = 0;
 
-//unsigned temp = ~PINA&0x0F;
+/*
+void timing () {
+	int x, y, xy;
+	//unsigned char center, up, down, left, right = 0;
+	ADC_Init();
 
-enum states{init, lights_wait, lit_up, user_input, correct, wrong} state; //might want a starter state?
+	x = ADC_Read(1);
+	y = ADC_Read(2);
+	xy = ADC_Read(3);
+	while((x > 400 && x < 600) && (y > 400 && y < 600)) { //meaning button not pressed
+		counting++;
+	}
+}	
+*/
+
+enum states{init, lights_wait, lit_up, user_input, wait_up, wait_down, wait_right, wait_left, correct, wrong} state; //might want a starter state?
 
 void tick() { //transitions babyyyyyy
-
-	//unsigned temp = ~PINA&0x0F;
 
 	int x, y, xy;
 	//unsigned char center, up, down, left, right = 0;
 	ADC_Init();
 
-	x = ADC_Read(0);
-	y = ADC_Read(1);
-	xy = ADC_Read(2);
+	x = ADC_Read(1);
+	y = ADC_Read(2);
+	xy = ADC_Read(3);
 
   switch (state) {
 
-    case init:
-			state = lights_wait;
+    case init: ;
+			//unsigned temp = ~PINA&0x01; //meant to ignore joystick inputs and just care about button
+			// time_t now;
+			// time(&now);
+			// ctime(&now);
+			// struct tm *local = localtime(&now);
+			// counting = localtime->tm_sec;
+			// counting = counting % 4;
+			if((x > 400 && x < 600) && (y > 400 && y < 600)) { //meaning button not pressed
+				counting++;
+				LCD_Cursor(1);
+				LCD_WriteData(counting + '0');
+				state = init;
+			}
+			else {
+				number = x + y;
+				state = lights_wait;
+			}
       break;
 
     case lights_wait: //automatically moves to next state after finsihing for loop
 			PORTB = 0;
       if(i < count){
-				
-        light_on = rand() % num_lights;
+				light_on = number % num_lights;
+        //light_on = rand() % num_lights;
         array[i] = light_on;
+				number = (number * light_on + 69) % 157; //https://www.quora.com/What-is-a-simple-formula-to-generate-a-random-number
 				LCD_Cursor(1);
 				LCD_WriteData(light_on+'0');
 				state = lit_up;
@@ -150,37 +181,33 @@ void tick() { //transitions babyyyyyy
 				int debug_left = 6;
 				int debug_right = 7;
 				int debug_down = 8;
-				int debug_wait = 9;
+				//int debug_wait = 9;
         if((x > 400 && x < 600) && (y > 400 && y < 600)) { //waiting for user input, currently in middle state
-					//count_2++;
           state = user_input;
         }
-        else if((array[j] == 0) && (y<600)) { //user got it right on top light
+        else if((array[j] == 0) && (y<400)) { //user got it right on top light //was 600
           count_2++;
           j++;
 					LCD_Cursor(1);
 					LCD_WriteData(debug_up+'0');
-          state = user_input;
+					state = wait_up;
+          //state = user_input;
         }
-        else if((array[j] == 1) && (x<600)) { //user got it right on left light
+        else if((array[j] == 1) && (x<400)) { //user got it right on left light //was 600
           count_2++;
           j++;
 					LCD_Cursor(1);
 					LCD_WriteData(debug_left+'0');
 					
-          state = user_input;
+          state = wait_left;
         }
-        else if((array[j] == 2) && (x>400)) { //user got it right on right light
-					while(x>600) {
-						LCD_Cursor(1);
-						LCD_WriteData(debug_wait+'0');
-					}
+        else if((array[j] == 2) && (x>600)) { //user got it right on right light //wass 400
           count_2++;
           j++;
 					LCD_Cursor(1);
 					LCD_WriteData(debug_right+'0');
 					
-          state = user_input;
+          state = wait_right;
         }
         else if((array[j] == 3) && (y>600)) { //user got it right on bottom light
           count_2++;
@@ -188,12 +215,48 @@ void tick() { //transitions babyyyyyy
 					LCD_Cursor(1);
 					LCD_WriteData(debug_down+'0');
 					
-          state = user_input;
+          state = wait_down;
         }
         else{ //user got it wrong
           state = wrong; 
         }
       }
+			break;
+
+		case wait_up:
+			if((x > 400 && x < 600) && (y > 400 && y < 600)) { //waiting for user input, currently in middle state
+          state = user_input;
+			}
+			else {
+				state = wait_up;
+			}
+			break;
+
+		case wait_left:
+			if((x > 400 && x < 600) && (y > 400 && y < 600)) { //waiting for user input, currently in middle state
+          state = user_input;
+        }
+			else {
+				state = wait_left;
+			}
+			break;
+
+		case wait_right:
+			if((x > 400 && x < 600) && (y > 400 && y < 600)) { //waiting for user input, currently in middle state
+          state = user_input;
+        }
+			else {
+				state = wait_right;
+			}
+			break;
+
+		case wait_down:
+			if((x > 400 && x < 600) && (y > 400 && y < 600)) { //waiting for user input, currently in middle state
+          state = user_input;
+        }
+			else {
+				state = wait_down;
+			}
 			break;
 
     case correct:
@@ -236,6 +299,18 @@ void tick() { //transitions babyyyyyy
     case user_input:
       break;
 
+		case wait_up:
+			break;
+
+		case wait_down:
+			break;
+
+		case wait_right:
+			break;
+
+		case wait_left:
+			break;
+
     case correct:
       break; //dont need aything here cuz we count++ in the transitions
 
@@ -255,8 +330,10 @@ int main() {
   DDRC = 0xFF; PORTC = 0x00;
 	DDRD = 0xFF; PORTD = 0x00;
 
+	//timing();
+
+	srand(counting); // randomize seed
 	
-	//srand(time(&t)); // randomize seed
 	
 
 	TimerSet(500);
