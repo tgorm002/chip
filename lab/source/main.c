@@ -11,7 +11,7 @@ Donkey: Oh, you both have layers. Oh. You know, not everybody like onions.
 */
 
 
-//RIGHT NOW MY LEFT AND RIGHT ARE INCORRECT
+
 
 
 #include <avr/io.h>
@@ -22,6 +22,10 @@ Donkey: Oh, you both have layers. Oh. You know, not everybody like onions.
 #include "stdlib.h"
 #include "time.h"
 #include "stdio.h"
+
+#include <util/delay.h>
+#include "ledmatrix7219d88.h"
+
 
 
 volatile unsigned char TimerFlag = 0; 
@@ -79,20 +83,7 @@ unsigned char checker = 0;
 unsigned char counting = 0;
 unsigned char number = 0;
 
-/*
-void timing () {
-	int x, y, xy;
-	//unsigned char center, up, down, left, right = 0;
-	ADC_Init();
 
-	x = ADC_Read(1);
-	y = ADC_Read(2);
-	xy = ADC_Read(3);
-	while((x > 400 && x < 600) && (y > 400 && y < 600)) { //meaning button not pressed
-		counting++;
-	}
-}	
-*/
 
 enum states{init, lights_wait, lit_up, user_input, wait_up, wait_down, wait_right, wait_left, correct, wrong} state; //might want a starter state?
 
@@ -263,6 +254,35 @@ void tick() { //transitions babyyyyyy
       //printf("smart boi") on LCD;
       
       PORTB = 0x1F;
+			ledmatrix7219d88_init();
+
+
+			uint8_t ledmatrix2 = 0;
+			uint8_t p = 1;
+		//for(;;) {
+		int8_t led = 0;
+		//loop every matrix
+		for(ledmatrix2=0; ledmatrix2<2; ledmatrix2++){
+			//loop every led
+			for(led=0; led<64; led++) {
+				if(p)
+					ledmatrix7219d88_setledon(ledmatrix2, led);
+				else
+					ledmatrix7219d88_setledoff(ledmatrix2, led);
+				_delay_ms(50);
+			}
+			ledmatrix7219d88_resetmatrix(ledmatrix2);
+		}
+
+		if(p)
+			p = 0;
+		else
+			p = 1;
+
+		_delay_ms(1000);
+	//}
+
+
       i=0;
 			j=0;
       count++;
@@ -273,8 +293,54 @@ void tick() { //transitions babyyyyyy
       //printf("you are stupid, a loser, and have no friends") on LCD;
 			
 			PORTB = 0x01;
-			LCD_Cursor(1);
-			LCD_WriteData("wrong"+'0');
+			// LCD_Cursor(1);
+			// LCD_WriteData("wrong"+'0');
+
+			ledmatrix7219d88_init();
+
+
+	uint8_t ledmatrix = 0;
+
+	//display test rows
+	uint8_t rows[8] = {
+			0b10000001,
+			0b01000010,
+			0b00100100,
+			0b00011000,
+			0b00011000,
+			0b00100100,
+			0b01000010,
+			0b10000001
+	};
+	ledmatrix = 0;
+	ledmatrix7219d88_setmatrix(0, rows);
+	ledmatrix = 1;
+	ledmatrix7219d88_setmatrix(1, rows);
+	_delay_ms(2000);
+
+	//display test rows
+	ledmatrix = 0;
+	ledmatrix7219d88_setrow(ledmatrix, 0, 0b10000000);
+	ledmatrix7219d88_setrow(ledmatrix, 1, 0b01000000);
+	ledmatrix7219d88_setrow(ledmatrix, 2, 0b00100000);
+	ledmatrix7219d88_setrow(ledmatrix, 3, 0b00010000);
+	ledmatrix7219d88_setrow(ledmatrix, 4, 0b00001000);
+	ledmatrix7219d88_setrow(ledmatrix, 5, 0b00000100);
+	ledmatrix7219d88_setrow(ledmatrix, 6, 0b00000010);
+	ledmatrix7219d88_setrow(ledmatrix, 7, 0b00000001);
+	ledmatrix = 1;
+	ledmatrix7219d88_setrow(ledmatrix, 0, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 1, 0b01010101);
+	ledmatrix7219d88_setrow(ledmatrix, 2, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 3, 0b01010101);
+	ledmatrix7219d88_setrow(ledmatrix, 4, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 5, 0b01010101);
+	ledmatrix7219d88_setrow(ledmatrix, 6, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 7, 0b01010101);
+	_delay_ms(2000);
+	ledmatrix7219d88_resetmatrix(0);
+	ledmatrix7219d88_resetmatrix(1);
+
 			j = 0;
       i = 0;
       count = 4;
@@ -353,9 +419,94 @@ int main() {
 
 
 
+/*
 
 
+//CODE TO MAKE THE MATRIX WORK:
+//ledmatrix7219d88 output example
 
+#include <stdio.h>
+#include <avr/io.h>
+#include <util/delay.h>
+
+#include "ledmatrix7219d88.h"
+
+
+int main(void) {
+	//init ledmatrix
+	ledmatrix7219d88_init();
+
+
+	uint8_t ledmatrix = 0;
+
+	//display test rows
+	uint8_t rows[8] = {
+			0b10000001,
+			0b01000010,
+			0b00100100,
+			0b00011000,
+			0b00011000,
+			0b00100100,
+			0b01000010,
+			0b10000001
+	};
+	ledmatrix = 0;
+	ledmatrix7219d88_setmatrix(0, rows);
+	ledmatrix = 1;
+	ledmatrix7219d88_setmatrix(1, rows);
+	_delay_ms(2000);
+
+	//display test rows
+	ledmatrix = 0;
+	ledmatrix7219d88_setrow(ledmatrix, 0, 0b10000000);
+	ledmatrix7219d88_setrow(ledmatrix, 1, 0b01000000);
+	ledmatrix7219d88_setrow(ledmatrix, 2, 0b00100000);
+	ledmatrix7219d88_setrow(ledmatrix, 3, 0b00010000);
+	ledmatrix7219d88_setrow(ledmatrix, 4, 0b00001000);
+	ledmatrix7219d88_setrow(ledmatrix, 5, 0b00000100);
+	ledmatrix7219d88_setrow(ledmatrix, 6, 0b00000010);
+	ledmatrix7219d88_setrow(ledmatrix, 7, 0b00000001);
+	ledmatrix = 1;
+	ledmatrix7219d88_setrow(ledmatrix, 0, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 1, 0b01010101);
+	ledmatrix7219d88_setrow(ledmatrix, 2, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 3, 0b01010101);
+	ledmatrix7219d88_setrow(ledmatrix, 4, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 5, 0b01010101);
+	ledmatrix7219d88_setrow(ledmatrix, 6, 0b10101010);
+	ledmatrix7219d88_setrow(ledmatrix, 7, 0b01010101);
+	_delay_ms(2000);
+	ledmatrix7219d88_resetmatrix(0);
+	ledmatrix7219d88_resetmatrix(1);
+
+	//test loop
+	uint8_t p = 1;
+	for(;;) {
+
+		int8_t led = 0;
+		//loop every matrix
+		for(ledmatrix=0; ledmatrix<LEDMATRIX7219D88_MAXLEDMATRIX; ledmatrix++){
+			//loop every led
+			for(led=0; led<64; led++) {
+				if(p)
+					ledmatrix7219d88_setledon(ledmatrix, led);
+				else
+					ledmatrix7219d88_setledoff(ledmatrix, led);
+				_delay_ms(50);
+			}
+			ledmatrix7219d88_resetmatrix(ledmatrix);
+		}
+
+		if(p)
+			p = 0;
+		else
+			p = 1;
+
+		_delay_ms(1000);
+	}
+}
+
+*/
 
 
 
