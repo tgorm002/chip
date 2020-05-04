@@ -400,8 +400,6 @@ int main() {
 
 	srand(counting); // randomize seed
 	
-	
-
 	TimerSet(500);
 	TimerOn();
 
