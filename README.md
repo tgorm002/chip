@@ -1,4 +1,4 @@
-#CS120B Final Project
+# CS120B Final Project
 
 > Winter 2019 // Trevor Gorman 862012653
 
